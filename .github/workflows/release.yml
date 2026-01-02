@@ -15,7 +15,7 @@ jobs:
       - name: Create OWWM Plugin Zip
         run: |
           # Wir gehen davon aus, dass dein Dashboard-Plugin im Ordner 'dashboard' liegt
-          zip -r owwmn.zip ./owwm -x "*.git*" ".github*"
+          zip -r owwm.zip ./owwm -x "*.git*" ".github*"
 
       - name: Create OWWM Child
         run: |
@@ -27,8 +27,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            owwmn.zip
-            owwmn-child.zip
+            owwm.zip
+            owwm-child.zip
           draft: false
           prerelease: false
         env:

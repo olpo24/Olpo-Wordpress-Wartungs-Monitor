@@ -1,13 +1,14 @@
 <?php
 /**
- * Plugin Name: Wordpress Wartungs Monitor
- * Plugin URI: https://github.com/olpo24/Wordpress-Wartungs-Monitor
+ * Plugin Name: WP Maintenance Monitor
+ * Plugin URI: https://github.com/yourusername/wp-maintenance-monitor
  * Description: Zentrales Dashboard zur Verwaltung mehrerer WordPress-Instanzen mit Remote-Update-Funktionen
- * Version: 0.1
+ * Version: 3.0.0
  * Author: Dein Name
  * License: GPL v3
  * Text Domain: wp-maintenance-monitor
  */
+
 if (!defined('ABSPATH')) exit;
 
 class WP_Maintenance_Monitor {

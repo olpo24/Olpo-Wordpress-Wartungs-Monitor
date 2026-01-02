@@ -235,5 +235,38 @@
         html += '</div>'; // Ende Grid
         container.html(html);
     }
+// 9. Neue Seite hinzufügen via AJAX (ohne Refresh)
+        $('#add-site-ajax-form').on('submit', function(e) {
+            e.preventDefault();
+            const btn = $('#submit-site');
+            const spinner = $('#add-site-spinner');
+            
+            btn.prop('disabled', true);
+            spinner.addClass('is-active');
 
+            const data = {
+                action: 'wpmm_add_site',
+                nonce: wpmmData.nonce,
+                name: $('#site-name').val(),
+                url: $('#site-url').val()
+            };
+
+            $.post(wpmmData.ajax_url, data, function(r) {
+                spinner.removeClass('is-active');
+                if(r.success) {
+                    // Formular ausblenden, Erfolg einblenden
+                    $('#add-site-ajax-form').slideUp();
+                    const downloadUrl = `admin.php?action=download_bridge&api_key=${r.data.api_key}`;
+                    $('#download-bridge-btn').attr('href', downloadUrl);
+                    $('#setup-success').fadeIn();
+                } else {
+                    alert('Fehler: ' + (r.data.message || 'Unbekannter Fehler'));
+                    btn.prop('disabled', false);
+                }
+            }).fail(function() {
+                spinner.removeClass('is-active');
+                alert('Server-Fehler beim Speichern der Seite.');
+                btn.prop('disabled', false);
+            });
+        });
 })(jQuery);

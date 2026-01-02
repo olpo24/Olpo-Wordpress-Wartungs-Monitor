@@ -2,7 +2,7 @@
 /*
 Plugin Name: WP Bridge Connector
 Description: Connector für WP Maintenance Monitor.
-Version: 1.0.2
+Version: 1.0.3
 */
 
 if (!defined('ABSPATH')) exit;
@@ -23,6 +23,14 @@ add_action('rest_api_init', function () {
 });
 
 function wpbc_get_status() {
+    // WICHTIG: Erforderliche WordPress-Dateien laden, damit Update-Funktionen verfügbar sind
+    if ( ! function_exists( 'get_plugin_updates' ) ) {
+        require_once ABSPATH . 'wp-admin/includes/update.php';
+    }
+    if ( ! function_exists( 'get_plugins' ) ) {
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+    }
+
     return [
         'version' => get_bloginfo('version'),
         'updates' => [
@@ -39,7 +47,8 @@ function wpbc_get_login() {
     $admins = get_users(['role' => 'administrator', 'number' => 1]);
     if (empty($admins)) return new WP_Error('no_admin', 'Kein Admin gefunden', ['status' => 404]);
     
-    $token = bin2hex(random_bytes(20));
+    // Sicherstellen, dass random_bytes existiert (PHP 7+)
+    $token = bin2hex(openssl_random_pseudo_bytes(20));
     update_option('wpbc_sso_' . $token, $admins[0]->ID, false);
     return ['success' => true, 'login_url' => add_query_arg('bridge_sso', $token, admin_url())];
 }
@@ -59,5 +68,6 @@ add_action('init', function() {
 
 function wpbc_check($request) {
     global $api_key;
-    return $request->get_header('X-Bridge-Key') === $api_key;
+    $header_key = $request->get_header('X-Bridge-Key');
+    return ($header_key && $header_key === $api_key);
 }

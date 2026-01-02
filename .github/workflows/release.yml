@@ -4,7 +4,8 @@ on:
   push:
     tags:
       - 'v*' # Wird ausgelöst, wenn du einen Tag pusht, der mit 'v' beginnt (z.B. v1.0.0)
-
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest

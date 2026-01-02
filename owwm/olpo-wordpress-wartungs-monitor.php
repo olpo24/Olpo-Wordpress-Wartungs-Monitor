@@ -53,7 +53,7 @@ class WP_Maintenance_Monitor {
 
     public function add_admin_menu() {
         // Hauptmenüpunkt
-        add_menu_page('Maintenance', 'Maintenance', 'manage_options', 'wp-maintenance-monitor', array($this, 'render_dashboard'), 'dashicons-admin-generic');
+        add_menu_page('Olpo Wordpress Wartungs Monitor', 'OWWM', 'manage_options', 'owwm', array($this, 'render_dashboard'), 'dashicons-admin-generic');
         
         // Dashboard Unterpunkt (identisch mit Hauptmenü)
         add_submenu_page('wp-maintenance-monitor', 'Dashboard', 'Dashboard', 'manage_options', 'wp-maintenance-monitor', array($this, 'render_dashboard'));

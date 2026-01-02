@@ -1,63 +1,78 @@
-/* WP Maintenance Monitor - Native UI */
+/* WP Maintenance Monitor - Native Backend Integration */
 
-.wpmm-container {
-    margin: 20px 20px 0 0;
+/* Dashboard Layout */
+.wpmm-dashboard-header {
+    margin-bottom: 20px;
 }
 
-/* Dashboard Grid */
 .site-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
-    margin-top: 20px;
 }
 
-.site-grid.mode-list {
-    display: block;
-}
-
-.site-grid.mode-list .site-card {
-    margin-bottom: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-/* WordPress Native Card Style */
+/* Card Style - Native WP Postbox Look */
 .site-card {
     background: #fff;
     border: 1px solid #c3c4c7;
     box-shadow: 0 1px 1px rgba(0,0,0,.04);
-    padding: 15px;
-    position: relative;
+}
+
+.card-header {
+    padding: 12px 15px;
+    border-bottom: 1px solid #f0f0f1;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
 .card-header h3 {
-    margin: 0 0 10px 0;
+    margin: 0;
     font-size: 14px;
-    padding: 0;
+    line-height: 1.4;
+}
+
+.site-url {
+    display: block;
+    font-size: 11px;
+    color: #646970;
+    text-decoration: none;
 }
 
 .card-content {
-    font-size: 13px;
-    color: #646970;
+    padding: 15px;
+    min-height: 60px;
 }
 
-.status-badge {
+.card-actions {
+    padding: 10px 15px;
+    background: #f6f7f7;
+    border-top: 1px solid #f0f0f1;
+    display: flex;
+    gap: 8px;
+}
+
+/* Status Badges */
+.wpmm-badge {
     display: inline-block;
     padding: 2px 8px;
     border-radius: 3px;
     font-size: 11px;
     font-weight: 600;
-    background: #f0f0f1;
-    color: #2c3338;
     border: 1px solid #c3c4c7;
+    background: #f0f0f1;
 }
 
-.status-badge.updates-available {
-    background: #fcf9e8;
-    color: #856404;
+.wpmm-badge.updates-msg {
     border-color: #d64e07;
+    background-color: #fcf9e8;
+    color: #d64e07;
+}
+
+.wpmm-badge.error-msg {
+    border-color: #d63638;
+    color: #d63638;
+    background: #fcf0f1;
 }
 
 /* Modals */
@@ -69,21 +84,20 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(2px);
+    background-color: rgba(0,0,0,0.5);
 }
 
 .wpmm-modal-content {
     background-color: #fff;
     margin: 10% auto;
-    padding: 0;
-    width: 500px;
+    width: 90%;
+    max-width: 500px;
     border: 1px solid #c3c4c7;
     box-shadow: 0 3px 6px rgba(0,0,0,.3);
 }
 
 .modal-header {
-    padding: 15px 20px;
+    padding: 15px;
     background: #f6f7f7;
     border-bottom: 1px solid #dcdcde;
     display: flex;
@@ -91,18 +105,5 @@
     align-items: center;
 }
 
-.modal-header h2 {
-    margin: 0;
-    font-size: 1.3em;
-}
-
-.modal-body {
-    padding: 20px;
-}
-
-.modal-footer {
-    padding: 15px 20px;
-    background: #f6f7f7;
-    border-top: 1px solid #dcdcde;
-    text-align: right;
-}
+.modal-header h2 { margin: 0; font-size: 14px; }
+.modal-body { padding: 20px; }

@@ -5,13 +5,13 @@
     <hr class="wp-header-end">
 
     <?php if (empty($sites)): ?>
-        <div class="notice notice-info"><p>Keine Seiten zur Überwachung konfiguriert.</p></div>
+        <div class="notice notice-info"><p>Keine Seiten konfiguriert.</p></div>
     <?php else: ?>
         <div class="site-grid">
             <?php foreach ($sites as $site): 
-                // Flexibilität für Spaltennamen aus der DB (name vs site_name)
-                $name = isset($site->name) ? $site->name : (isset($site->site_name) ? $site->site_name : 'Unbekannt');
-                $url  = isset($site->url) ? $site->url : (isset($site->site_url) ? $site->site_url : '');
+                // Prüft beide Varianten (name/site_name), um PHP Warnings zu verhindern
+                $name = !empty($site->name) ? $site->name : (!empty($site->site_name) ? $site->site_name : 'Unbekannt');
+                $url  = !empty($site->url) ? $site->url : (!empty($site->site_url) ? $site->site_url : '');
             ?>
                 <div class="site-card" data-id="<?= $site->id ?>">
                     <div class="card-header">

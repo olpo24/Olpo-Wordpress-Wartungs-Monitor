@@ -5,10 +5,11 @@
     <hr class="wp-header-end">
 
     <?php if (empty($sites)): ?>
-        <div class="notice notice-info"><p>Keine Seiten konfiguriert.</p></div>
+        <div class="notice notice-info"><p>Keine Seiten zur Überwachung konfiguriert.</p></div>
     <?php else: ?>
         <div class="site-grid">
             <?php foreach ($sites as $site): 
+                // Flexibilität für Spaltennamen aus der DB (name vs site_name)
                 $name = isset($site->name) ? $site->name : (isset($site->site_name) ? $site->site_name : 'Unbekannt');
                 $url  = isset($site->url) ? $site->url : (isset($site->site_url) ? $site->site_url : '');
             ?>
@@ -40,7 +41,7 @@
 <div id="edit-modal" class="wpmm-modal">
     <div class="wpmm-modal-content">
         <div class="modal-header">
-            <h2>Seitendetails</h2>
+            <h2>Seiteneinstellungen</h2>
             <button class="close-edit-modal" style="border:none; background:none; cursor:pointer; font-size:20px;">&times;</button>
         </div>
         <div class="modal-body">
@@ -57,9 +58,9 @@
                     </tr>
                 </table>
                 <div style="margin-top:20px; display:flex; justify-content: space-between; align-items: center;">
-                    <button type="submit" class="button button-primary">Änderungen speichern</button>
+                    <button type="submit" class="button button-primary">Speichern</button>
                     <button type="button" class="button btn-delete-site" style="color:#d63638; border-color:#d63638;">
-                        Löschen
+                        Diese Seite löschen
                     </button>
                 </div>
             </form>

@@ -1,5 +1,5 @@
 {
-    "name": "olpo/Olpo-Wordpress-Wartungs-Monitor Connector",
+    "name": "olpo/olpo-wordpress-wartungs-monitor-connector",
     "description": "Wordpress Wartungs-Monitor Connector",
     "type": "wordpress-plugin",
     "require": {

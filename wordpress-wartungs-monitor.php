@@ -8,7 +8,6 @@
  * License: GPL v3
  * Text Domain: wp-maintenance-monitor
  */
-
 if (!defined('ABSPATH')) exit;
 
 class WP_Maintenance_Monitor {

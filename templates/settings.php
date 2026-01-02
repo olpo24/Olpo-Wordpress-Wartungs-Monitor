@@ -75,12 +75,17 @@ $display_mode = get_user_meta(get_current_user_id(), 'wpmm_display_mode', true) 
                     <div style="background: white; padding: 15px; border: 2px dashed #28a745; border-radius: 5px; font-family: monospace; font-size: 16px; word-break: break-all;">
                         <span id="generated-api-key"></span>
                     </div>
-                    <button id="copy-key-btn" class="button" style="margin-top: 10px;">
-                        📋 API-Key kopieren
-                    </button>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button id="copy-key-btn" class="button">
+                            📋 API-Key kopieren
+                        </button>
+                        <button id="download-plugin-btn" class="button button-primary">
+                            ⬇️ Bridge-Plugin herunterladen
+                        </button>
+                    </div>
                     <p style="margin-top: 15px; color: #856404; background: #fff3cd; padding: 10px; border-radius: 5px; border: 1px solid #ffeaa7;">
                         <strong>Wichtig:</strong> Notiere dir diesen Key jetzt! Er wird nicht wieder angezeigt.<br>
-                        Installiere das Bridge-Plugin (<code>wordpress-bridge-connector.php</code>) auf der Zielseite und trage diesen Key dort ein.
+                        Lade das Bridge-Plugin herunter, installiere es auf der Zielseite und trage dort den API-Key ein.
                     </p>
                 </div>
             </div>
@@ -94,15 +99,25 @@ $display_mode = get_user_meta(get_current_user_id(), 'wpmm_display_mode', true) 
             <div class="inside" style="padding: 20px;">
                 <ol style="line-height: 2;">
                     <li><strong>Neue Seite anlegen:</strong> Füge oben eine WordPress-Installation hinzu und erhalte einen API-Key</li>
-                    <li><strong>Bridge-Plugin installieren:</strong> Installiere das Plugin <code>wordpress-bridge-connector.php</code> auf der Ziel-WordPress-Seite</li>
+                    <li><strong>Bridge-Plugin herunterladen:</strong> Klicke auf "Bridge-Plugin herunterladen" um die ZIP-Datei zu erhalten</li>
+                    <li><strong>Plugin installieren:</strong> Lade die ZIP-Datei auf der Ziel-WordPress-Seite unter <em>Plugins → Installieren → Plugin hochladen</em> hoch</li>
                     <li><strong>API-Key eintragen:</strong> Gehe auf der Zielseite zu <em>Einstellungen → WP Bridge</em> und trage den Key ein</li>
                     <li><strong>Dashboard nutzen:</strong> Ab jetzt kannst du von hier aus Updates verwalten!</li>
                 </ol>
                 
                 <div style="background: #e7f3ff; border-left: 4px solid #0073aa; padding: 15px; margin-top: 20px;">
-                    <h4 style="margin-top: 0;">💡 Tipp: Bridge-Plugin</h4>
-                    <p>Das Bridge-Plugin sollte sich bereits in deinem ursprünglichen Plugin-Verzeichnis befinden als <code>wordpress-bridge-connector.php</code>. 
-                    Du kannst es manuell auf die Zielseiten hochladen und dort den generierten API-Key in den Plugin-Einstellungen eintragen.</p>
+                    <h4 style="margin-top: 0;">💡 Alternative Installation</h4>
+                    <p>Du kannst das Bridge-Plugin auch direkt herunterladen (ohne API-Key voreingestellt):</p>
+                    <p>
+                        <a href="<?php echo esc_url(admin_url('admin-ajax.php?action=wpmm_download_plugin&nonce=' . wp_create_nonce('wpmm_nonce'))); ?>" 
+                           class="button" 
+                           download>
+                            📦 Bridge-Plugin ohne API-Key herunterladen
+                        </a>
+                    </p>
+                    <p style="margin: 10px 0 0 0; font-size: 12px; color: #666;">
+                        Bei dieser Variante musst du den API-Key manuell in den Plugin-Einstellungen eintragen.
+                    </p>
                 </div>
             </div>
         </div>
@@ -179,7 +194,32 @@ jQuery(document).ready(function($) {
             if (response.success) {
                 location.reload();
             }
-        });
+            // Plugin herunterladen
+    $('#download-plugin-btn').on('click', function() {
+        if (!currentApiKey) {
+            alert('Kein API-Key vorhanden. Bitte lege zuerst eine Seite an.');
+            return;
+        }
+        
+        // Download-URL mit API-Key
+        var downloadUrl = wpmmData.ajax_url + 
+                         '?action=wpmm_download_plugin' +
+                         '&nonce=' + wpmmData.nonce +
+                         '&key=' + encodeURIComponent(currentApiKey);
+        
+        // Download starten
+        window.location.href = downloadUrl;
+        
+        // Visuelles Feedback
+        var btn = $(this);
+        var originalText = btn.text();
+        btn.text('⬇️ Download wird vorbereitet...').prop('disabled', true);
+        
+        setTimeout(function() {
+            btn.text(originalText).prop('disabled', false);
+        }, 2000);
+    });
+});
     });
     
     // Seite hinzufügen

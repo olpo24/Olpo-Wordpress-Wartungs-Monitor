@@ -437,7 +437,66 @@ function wpbc_update_core($request) {
             'error' => 'Could not initialize filesystem',
         ], 500);
     }
+/**
+ * REST Endpoint: Erzeugt einen temporären Login-Link
+ */
+add_action('rest_api_init', function () {
+    register_rest_route('bridge/v1', '/get-login-url', [
+        'methods' => 'GET',
+        'callback' => 'wpbc_generate_sso_link',
+        'permission_callback' => 'wpbc_check_auth',
+    ]);
+});
 
+function wpbc_generate_sso_link() {
+    // Finde einen Administrator
+    $admins = get_users(['role' => 'administrator', 'number' => 1]);
+    if (empty($admins)) {
+        return new WP_REST_Response(['success' => false, 'message' => 'Kein Admin gefunden'], 404);
+    }
+    $admin = $admins[0];
+
+    // Erzeuge einen sicheren, kurzlebigen Token
+    $token = bin2hex(random_bytes(20));
+    $expires = time() + 60; // 60 Sekunden gültig
+
+    // Speichere den Token temporär in der Datenbank
+    update_option('wpbc_sso_token_' . $token, [
+        'user_id' => $admin->ID,
+        'expires' => $expires
+    ], false);
+
+    // Der Link, der den Token beim Aufruf verarbeitet
+    $login_url = add_query_arg([
+        'bridge_sso' => $token
+    ], admin_url());
+
+    return new WP_REST_Response([
+        'success' => true,
+        'login_url' => $login_url
+    ], 200);
+}
+
+/**
+ * Verarbeitet den eingehenden SSO-Token-Aufruf
+ */
+add_action('init', function() {
+    if (isset($_GET['bridge_sso'])) {
+        $token = sanitize_text_field($_GET['bridge_sso']);
+        $option_key = 'wpbc_sso_token_' . $token;
+        $data = get_option($option_key);
+
+        if ($data && $data['expires'] > time()) {
+            // Token gültig -> Einloggen
+            wp_set_auth_cookie($data['user_id']);
+            delete_option($option_key); // Token sofort verbrauchen
+            wp_redirect(admin_url());
+            exit;
+        } else {
+            wp_die('Der Login-Link ist abgelaufen oder ungültig.');
+        }
+    }
+});
     // Core Update durchführen
     $skin = new WP_Ajax_Upgrader_Skin();
     $upgrader = new Core_Upgrader($skin);

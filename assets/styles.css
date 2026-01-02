@@ -18,3 +18,29 @@
 
 .wpmm-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 9999; }
 .wpmm-modal-content { background: #fff; padding: 25px; border-radius: 5px; width: 400px; }
+
+/* Progress Bar Styles */
+.wpmm-progress-container {
+    height: 20px;
+    background-color: #f0f0f1;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #ccd0d4;
+}
+
+.wpmm-progress-bar {
+    height: 100%;
+    width: 0%;
+    background-color: #2271b1;
+    color: white;
+    text-align: center;
+    line-height: 20px;
+    font-size: 11px;
+    transition: width 0.4s ease;
+}
+
+.bulk-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}

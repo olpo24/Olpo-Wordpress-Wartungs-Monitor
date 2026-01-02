@@ -51,7 +51,7 @@ jobs:
         uses: softprops/action-gh-release@v2 # Upgrade auf v2 für bessere Stabilität
         with:
           files: |
-            owm.zip
+            owwm.zip
             owwm-child.zip
           draft: false
           prerelease: false

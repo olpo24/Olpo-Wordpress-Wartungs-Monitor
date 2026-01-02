@@ -18,10 +18,16 @@ $myUpdateChecker = PucFactory::buildUpdateChecker(
     __FILE__,
     'owwm-child'
 );
-// 3. ZWINGEND: Nur Assets verwenden (Dies überschreibt den zipball-Link)
-$myUpdateChecker->getStrategy()->setContext('releases'); 
-// Falls 'releases' nicht reicht, versuche alternativ:
-// $myUpdateChecker->getStrategy()->useReleaseAssets();
+// Download-Link für das Child-Plugin umleiten
+add_filter('site_transient_update_plugins', function($transient) {
+    $child_file = 'owwm-child/owwm-connector.php';
+    if (isset($transient->response[$child_file])) {
+        $version = $transient->response[$child_file]->new_version;
+        // Erzwingt den Link zum manuell erstellten Child-ZIP
+        $transient->response[$child_file]->package = "https://github.com/olpo24/Olpo-Wordpress-Wartungs-Monitor/releases/download/v{$version}/owwm-child.zip";
+    }
+    return $transient;
+});
 
 if (!defined('ABSPATH')) exit;
 

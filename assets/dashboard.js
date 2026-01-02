@@ -54,19 +54,19 @@
             }, function() { location.reload(); });
         });
 
-        $(document).on('click', '.btn-run-bulk-update', function() {
-            const id = $(this).data('id');
-            const items = $('#update-container-' + id).find('input:checked');
-            if(items.length > 0) processBulkUpdate(id, items);
+        $(document).on('click', '.btn-delete-site', function() {
+            if(confirm('Seite wirklich löschen?')) {
+                $.post(wpmmData.ajax_url, { action: 'wpmm_delete_site', nonce: wpmmData.nonce, id: $('#edit-site-id').val() }, function() { location.reload(); });
+            }
         });
     });
 
     function loadSiteStatus(id) {
         $.post(wpmmData.ajax_url, { action: 'wpmm_get_status', nonce: wpmmData.nonce, id: id }, function(r) {
-            if(r.success) {
+            if(r.success && r.data) {
                 siteDataCache[id] = r.data;
                 const c = r.data.updates.counts;
-                $(`#version-${id}`).text(r.data.version);
+                $(`#version-${id}`).text(r.data.version || '-');
                 $(`#status-${id}`).html(`<span class="cluster-badge ${c.plugins > 0 ? 'has-updates' : ''}">P: ${c.plugins}</span><span class="cluster-badge ${c.themes > 0 ? 'has-updates' : ''}">T: ${c.themes}</span>`);
             }
         });
@@ -75,18 +75,9 @@
     function renderUpdateLists(id) {
         const data = siteDataCache[id];
         let html = '';
-        if(data.updates.plugin_names) {
-            data.updates.plugin_names.forEach(p => html += `<div><input type="checkbox" class="plugin-upd" value="${p}"> ${p.split('/')[0]}</div>`);
+        if(data && data.updates && data.updates.plugin_names) {
+            data.updates.plugin_names.forEach(p => html += `<div><input type="checkbox" value="${p}"> ${p.split('/')[0]}</div>`);
         }
         $('#update-container-' + id).html(html || 'Alles aktuell');
-    }
-
-    async function processBulkUpdate(id, items) {
-        for(let item of items) {
-            const $i = $(item);
-            await $.post(wpmmData.ajax_url, { action: 'wpmm_update_plugin', nonce: wpmmData.nonce, id: id, item: $i.val() });
-            $i.parent().append(' ✅');
-        }
-        loadSiteStatus(id);
     }
 })(jQuery);

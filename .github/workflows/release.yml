@@ -25,7 +25,7 @@ jobs:
           sed -i "s/Version: .*/Version: ${{ steps.get_version.outputs.VERSION }}/g" ./owwm/olpo-wordpress-wartungs-monitor.php
           sed -i "s/Version: .*/Version: ${{ steps.get_version.outputs.VERSION }}/g" ./owwm-child/owwm-connector.php
           
-	  - name: Install Dependencies (Dashboard)
+	- name: Install Dependencies (Dashboard)
         run: |
           cd ./owwm
           composer install --no-dev --optimize-autoloader

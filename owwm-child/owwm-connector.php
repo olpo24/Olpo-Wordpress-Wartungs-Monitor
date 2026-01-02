@@ -1,108 +1,153 @@
 <?php
 /*
 Plugin Name: Olpo Wordpress Wartungs Monitor Connector
-Version: 1.0.6
-*/
+* Description: Empfängt Befehle vom Olpo-WordpressWartungs-Monitor. API-Key kann in den Einstellungen hinterlegt werden.
+ * Version: 2.0.0
+ * Author: olpo
+ */
 
 if (!defined('ABSPATH')) exit;
 
-$api_key = 'YOUR_API_KEY_HERE';
+class WP_Bridge_Connector_Static {
 
-add_action('rest_api_init', function () {
-    register_rest_route('bridge/v1', '/status', [
-        'methods' => 'GET',
-        'callback' => 'wpbc_get_status',
-        'permission_callback' => 'wpbc_check'
-    ]);
-    register_rest_route('bridge/v1', '/update', [
-        'methods' => 'POST',
-        'callback' => 'wpbc_do_update',
-        'permission_callback' => 'wpbc_check'
-    ]);
-    register_rest_route('bridge/v1', '/get-login-url', [
-        'methods' => 'GET',
-        'callback' => 'wpbc_get_login',
-        'permission_callback' => 'wpbc_check'
-    ]);
-});
-
-function wpbc_get_status() {
-    require_once ABSPATH . 'wp-admin/includes/update.php';
-    require_once ABSPATH . 'wp-admin/includes/plugin.php';
-    require_once ABSPATH . 'wp-admin/includes/theme.php';
-
-    wp_update_plugins();
-    wp_update_themes();
-
-    $plugin_updates = get_plugin_updates();
-    $theme_updates = get_theme_updates();
-    $core_updates = get_core_updates();
-    
-    $has_core_update = (isset($core_updates[0]->response) && $core_updates[0]->response === 'upgrade');
-
-    return [
-        'version' => get_bloginfo('version'),
-        'updates' => [
-            'counts' => [
-                'plugins' => count($plugin_updates),
-                'themes'  => count($theme_updates),
-                'core'    => $has_core_update ? 1 : 0
-            ],
-            'plugin_names' => array_keys($plugin_updates),
-            'theme_names'  => array_keys($theme_updates)
-        ]
-    ];
-}
-
-function wpbc_do_update($request) {
-    require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
-    require_once ABSPATH . 'wp-admin/includes/file.php';
-    require_once ABSPATH . 'wp-admin/includes/update.php';
-    
-    $params = $request->get_json_params();
-    $type = $params['type'];
-    $slug = $params['slug'] ?? '';
-    $skin = new Automatic_Upgrader_Skin();
-    $result = false;
-
-    if ($type === 'plugin') {
-        $upgrader = new Plugin_Upgrader($skin);
-        $result = $upgrader->upgrade($slug);
-        delete_site_transient('update_plugins');
-    } elseif ($type === 'theme') {
-        $upgrader = new Theme_Upgrader($skin);
-        $result = $upgrader->upgrade($slug);
-        delete_site_transient('update_themes');
-    } elseif ($type === 'core') {
-        $upgrader = new Core_Upgrader($skin);
-        $updates = get_core_updates();
-        $result = $upgrader->upgrade($updates[0]);
+    public function __construct() {
+        add_action('admin_menu', [$this, 'add_settings_menu']);
+        add_action('admin_init', [$this, 'register_settings']);
+        add_action('rest_api_init', [$this, 'register_routes']);
+        add_action('init', [$this, 'handle_sso_login']);
     }
 
-    return ['success' => ($result === true || (is_array($result) && !empty($result)))];
-}
+    // 1. Einstellungsseite auf der Zielseite
+    public function add_settings_menu() {
+        add_options_page('Bridge Connector', 'Bridge Connector', 'manage_options', 'bridge-connector', [$this, 'render_settings_page']);
+    }
 
-function wpbc_get_login() {
-    $admins = get_users(['role' => 'administrator', 'number' => 1]);
-    if (empty($admins)) return new WP_Error('no_admin', 'Kein Admin gefunden');
-    $token = bin2hex(openssl_random_pseudo_bytes(20));
-    update_option('wpbc_sso_' . $token, $admins[0]->ID, false);
-    return ['success' => true, 'login_url' => add_query_arg('bridge_sso', $token, admin_url())];
-}
+    public function register_settings() {
+        register_setting('wpbc_settings_group', 'wpbc_api_key');
+    }
 
-add_action('init', function() {
-    if (isset($_GET['bridge_sso'])) {
-        $user_id = get_option('wpbc_sso_' . $_GET['bridge_sso']);
-        if ($user_id) {
-            wp_set_auth_cookie($user_id);
-            delete_option('wpbc_sso_' . $_GET['bridge_sso']);
-            wp_redirect(admin_url());
-            exit;
+    public function render_settings_page() {
+        ?>
+        <div class="wrap">
+            <h1>Bridge Connector Einstellungen</h1>
+            <form method="post" action="options.php">
+                <?php settings_fields('wpbc_settings_group'); ?>
+                <table class="form-table">
+                    <tr>
+                        <th scope="row">API-Key</th>
+                        <td>
+                            <input type="text" name="wpbc_api_key" value="<?php echo esc_attr(get_option('wpbc_api_key')); ?>" class="regular-text" style="font-family:monospace;">
+                            <p class="description">Kopiere den Key aus deinem zentralen Wartungs-Dashboard hierher.</p>
+                        </td>
+                    </tr>
+                </table>
+                <?php submit_button('Key speichern'); ?>
+            </form>
+            <div style="margin-top:20px; padding:15px; background:#e7f4e9; border-left:4px solid #46b450;">
+                <strong>Status:</strong> <?php echo get_option('wpbc_api_key') ? '✅ Key hinterlegt. Verbindung bereit.' : '❌ Kein Key gefunden.'; ?>
+            </div>
+        </div>
+        <?php
+    }
+
+    // 2. API Endpunkte
+    public function register_routes() {
+        register_rest_route('bridge/v1', '/status', [
+            'methods' => 'GET',
+            'callback' => [$this, 'get_status'],
+            'permission_callback' => [$this, 'check_auth']
+        ]);
+        register_rest_route('bridge/v1', '/update', [
+            'methods' => 'POST',
+            'callback' => [$this, 'do_update'],
+            'permission_callback' => [$this, 'check_auth']
+        ]);
+        register_rest_route('bridge/v1', '/get-login-url', [
+            'methods' => 'GET',
+            'callback' => [$this, 'generate_sso_url'],
+            'permission_callback' => [$this, 'check_auth']
+        ]);
+    }
+
+    public function check_auth($request) {
+        $saved_key = get_option('wpbc_api_key');
+        $sent_key = $request->get_header('X-Bridge-Key');
+        return (!empty($saved_key) && $sent_key === $saved_key);
+    }
+
+    public function get_status() {
+        require_once ABSPATH . 'wp-admin/includes/update.php';
+        wp_update_plugins();
+        wp_update_themes();
+
+        $plugins = get_plugin_updates();
+        $themes = get_theme_updates();
+        $core = get_core_updates();
+        $has_core = (isset($core[0]->response) && $core[0]->response === 'upgrade');
+
+        return [
+            'version' => get_bloginfo('version'),
+            'updates' => [
+                'counts' => ['plugins' => count($plugins), 'themes' => count($themes), 'core' => $has_core ? 1 : 0],
+                'plugin_names' => array_keys($plugins),
+                'theme_names' => array_keys($themes)
+            ]
+        ];
+    }
+
+    public function do_update($request) {
+        require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        
+        $params = $request->get_json_params();
+        $type = $params['type'];
+        $slug = $params['slug'];
+        $skin = new Automatic_Upgrader_Skin();
+        
+        if ($type === 'plugin') {
+            $upgrader = new Plugin_Upgrader($skin);
+            $result = $upgrader->upgrade($slug);
+            delete_site_transient('update_plugins');
+        } elseif ($type === 'theme') {
+            $upgrader = new Theme_Upgrader($skin);
+            $result = $upgrader->upgrade($slug);
+            delete_site_transient('update_themes');
+        } elseif ($type === 'core') {
+            $upgrader = new Core_Upgrader($skin);
+            $updates = get_core_updates();
+            $result = $upgrader->upgrade($updates[0]);
+        }
+
+        return ['success' => ($result === true || is_array($result))];
+    }
+
+    public function generate_sso_url() {
+        $admins = get_users(['role' => 'administrator', 'number' => 1]);
+        if (empty($admins)) return ['error' => 'No admin found'];
+        
+        $token = bin2hex(random_bytes(20));
+        update_option('wpbc_sso_' . $token, $admins[0]->ID, false);
+        // Token läuft nach 60 Sekunden ab
+        wp_schedule_single_event(time() + 60, 'wpbc_cleanup_sso', [$token]);
+
+        return [
+            'success' => true,
+            'login_url' => add_query_arg('bridge_sso', $token, admin_url())
+        ];
+    }
+
+    public function handle_sso_login() {
+        if (isset($_GET['bridge_sso'])) {
+            $token = sanitize_text_field($_GET['bridge_sso']);
+            $user_id = get_option('wpbc_sso_' . $token);
+            if ($user_id) {
+                delete_option('wpbc_sso_' . $token);
+                wp_set_auth_cookie($user_id);
+                wp_redirect(admin_url());
+                exit;
+            }
         }
     }
-});
-
-function wpbc_check($request) {
-    global $api_key;
-    return ($request->get_header('X-Bridge-Key') === $api_key);
 }
+
+new WP_Bridge_Connector_Static();

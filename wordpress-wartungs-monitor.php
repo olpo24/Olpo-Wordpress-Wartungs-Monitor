@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: WP Maintenance Monitor
+ * Plugin Name: Olpo-Wordpress-Wartungs-Monitor
  * Description: Zentrales Dashboard zur Verwaltung von Remote-Updates und SSO Login.
- * Version: 3.2.1
+ * Version: 0.1
  */
 
 if (!defined('ABSPATH')) exit;

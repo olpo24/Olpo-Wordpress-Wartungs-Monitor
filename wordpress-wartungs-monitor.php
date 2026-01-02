@@ -37,6 +37,7 @@ class WP_Maintenance_Monitor {
         add_action('wp_ajax_wpmm_delete_site', [$this, 'ajax_delete_site']);
         add_action('wp_ajax_wpmm_clear_logs', [$this, 'ajax_clear_logs']);
         add_action('wp_ajax_wpmm_set_display_mode', [$this, 'ajax_set_display_mode']);
+        add_action('wp_ajax_wpmm_download_plugin', [$this, 'ajax_download_plugin']);
     }
     
     /**
@@ -326,6 +327,25 @@ class WP_Maintenance_Monitor {
         }
         
         return json_decode(wp_remote_retrieve_body($response), true);
+    }
+}
+
+    /**
+     * Plugin-Download generieren
+     */
+    public function generate_plugin_zip($api_key) {
+        $plugin_content = file_get_contents(plugin_dir_path(__FILE__) . 'bridge-connector-template.php');
+        $plugin_content = str_replace('{{API_KEY}}', $api_key, $plugin_content);
+        
+        $zip_path = sys_get_temp_dir() . '/wp-bridge-connector-' . time() . '.zip';
+        
+        $zip = new ZipArchive();
+        if ($zip->open($zip_path, ZipArchive::CREATE) === TRUE) {
+            $zip->addFromString('wp-bridge-connector.php', $plugin_content);
+            $zip->close();
+            return $zip_path;
+        }
+        return false;
     }
 }
 

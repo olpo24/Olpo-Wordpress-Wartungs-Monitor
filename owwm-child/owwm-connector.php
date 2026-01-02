@@ -5,7 +5,19 @@ Plugin Name: Olpo Wordpress Wartungs Monitor Connector
  * Version: 0.1
  * Author: olpo
  */
+// Am Anfang der Datei (nach dem Plugin Header)
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require_once __DIR__ . '/vendor/autoload.php';
+}
 
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
+
+// Update Checker initialisieren
+$myUpdateChecker = PucFactory::buildUpdateChecker(
+    'https://github.com/olpo24/Olpo-Wordpress-Wartungs-Monitor/',
+    __FILE__,
+    'owwm-child'
+);
 if (!defined('ABSPATH')) exit;
 
 class WP_Bridge_Connector_Static {

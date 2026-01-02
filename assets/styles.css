@@ -1,47 +1,41 @@
-/* WP Maintenance Monitor - Native Backend Integration */
+/* WP Maintenance Monitor - Final Clean Native */
 
-/* Dashboard Layout */
-.wpmm-dashboard-header {
-    margin-bottom: 20px;
-}
+.wpmm-container { margin: 20px 20px 0 0; }
 
 .site-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
+    margin-top: 20px;
 }
 
-/* Card Style - Native WP Postbox Look */
 .site-card {
     background: #fff;
     border: 1px solid #c3c4c7;
     box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    display: flex;
+    flex-direction: column;
 }
 
 .card-header {
-    padding: 12px 15px;
+    padding: 15px;
     border-bottom: 1px solid #f0f0f1;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
 }
 
 .card-header h3 {
-    margin: 0;
+    margin: 0 0 5px 0;
     font-size: 14px;
-    line-height: 1.4;
 }
 
 .site-url {
-    display: block;
     font-size: 11px;
-    color: #646970;
+    color: #2271b1;
     text-decoration: none;
 }
 
 .card-content {
     padding: 15px;
-    min-height: 60px;
+    flex-grow: 1;
 }
 
 .card-actions {
@@ -49,55 +43,52 @@
     background: #f6f7f7;
     border-top: 1px solid #f0f0f1;
     display: flex;
-    gap: 8px;
+    gap: 5px;
 }
 
-/* Status Badges */
+/* Badges */
 .wpmm-badge {
     display: inline-block;
     padding: 2px 8px;
     border-radius: 3px;
     font-size: 11px;
-    font-weight: 600;
-    border: 1px solid #c3c4c7;
     background: #f0f0f1;
+    color: #2c3338;
+    border: 1px solid #c3c4c7;
 }
 
 .wpmm-badge.updates-msg {
+    background: #fcf9e8;
     border-color: #d64e07;
-    background-color: #fcf9e8;
     color: #d64e07;
 }
 
 .wpmm-badge.error-msg {
+    background: #fcf0f1;
     border-color: #d63638;
     color: #d63638;
-    background: #fcf0f1;
 }
 
-/* Modals */
+/* Modal Styling */
 .wpmm-modal {
     display: none;
     position: fixed;
     z-index: 100000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
 }
 
 .wpmm-modal-content {
-    background-color: #fff;
+    background: #fff;
     margin: 10% auto;
-    width: 90%;
-    max-width: 500px;
+    width: 450px;
     border: 1px solid #c3c4c7;
     box-shadow: 0 3px 6px rgba(0,0,0,.3);
 }
 
 .modal-header {
-    padding: 15px;
+    padding: 10px 15px;
     background: #f6f7f7;
     border-bottom: 1px solid #dcdcde;
     display: flex;
@@ -105,5 +96,5 @@
     align-items: center;
 }
 
-.modal-header h2 { margin: 0; font-size: 14px; }
-.modal-body { padding: 20px; }
+.modal-header h2 { font-size: 13px; margin: 0; }
+.modal-body { padding: 15px; }

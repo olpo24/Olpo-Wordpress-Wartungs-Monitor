@@ -2,7 +2,7 @@
 /*
 Plugin Name: Olpo Wordpress Wartungs Monitor Connector
 * Description: Empfängt Befehle vom Olpo-WordpressWartungs-Monitor. API-Key kann in den Einstellungen hinterlegt werden.
- * Version: 2.0.0
+ * Version: 0.1
  * Author: olpo
  */
 

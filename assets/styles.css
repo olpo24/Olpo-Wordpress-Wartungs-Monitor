@@ -1,55 +1,29 @@
-/* WP Maintenance Monitor - Native List & Quick Edit */
+/* WP Maintenance Monitor - Dashboard Fix */
 
-.wp-list-table .column-status { width: 220px; }
-.wp-list-table .column-actions { width: 120px; text-align: right; }
+.inline-edit-row { background-color: #f6f7f7 !important; }
+.inline-edit-wrapper { padding: 15px; border-left: 4px solid #2271b1; }
+.update-lists-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
 
-/* Inline Edit Bereich */
-.inline-edit-row {
-    background-color: #f6f7f7 !important;
+/* Modal Styles */
+.wpmm-modal {
+    display: none;
+    position: fixed;
+    z-index: 999999; /* Sehr hoch für WP Admin Bar Kompatibilität */
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
 }
-
-.inline-edit-wrapper {
-    padding: 15px;
-    border-left: 4px solid #2271b1;
+.wpmm-modal-content {
+    background: #fff;
+    margin: 10% auto;
+    width: 90%; max-width: 500px;
+    border-radius: 4px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
-
-.update-lists-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
-    margin-bottom: 15px;
-}
-
-.update-list-group h4 {
-    margin: 0 0 10px 0;
-    font-size: 13px;
-    border-bottom: 1px solid #dcdcde;
-    padding-bottom: 5px;
-}
-
-.update-item {
-    margin-bottom: 5px;
-    display: flex;
-    align-items: center;
-    font-size: 12px;
-}
-
-.update-item input { margin-right: 8px !important; }
+.modal-header { padding: 15px; border-bottom: 1px solid #dcdcde; display: flex; justify-content: space-between; align-items: center; }
+.modal-body { padding: 20px; }
 
 /* Badges */
-.update-cluster { display: flex; gap: 4px; }
-.cluster-badge {
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 10px;
-    background: #f0f0f1;
-    border: 1px solid #c3c4c7;
-}
-.cluster-badge.has-updates {
-    background: #fcf9e8;
-    border-color: #d64e07;
-    color: #d64e07;
-}
-
-/* Spinner & Status */
+.cluster-badge { padding: 2px 6px; border-radius: 3px; font-size: 10px; background: #f0f0f1; border: 1px solid #c3c4c7; margin-right: 4px; }
+.cluster-badge.has-updates { background: #fcf9e8; border-color: #d64e07; color: #d64e07; }
 .wpmm-loading { opacity: 0.5; pointer-events: none; }

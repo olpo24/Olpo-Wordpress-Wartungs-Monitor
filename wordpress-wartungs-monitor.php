@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WP Maintenance Monitor
  * Description: Zentrales Dashboard zur Verwaltung von Remote-Updates und One-Click Admin Login.
- * Version: 3.0.2
+ * Version: 3.0.3
  * Author: Dein Name
  */
 
@@ -13,7 +13,7 @@ if (!class_exists('WP_Maintenance_Monitor')) {
     class WP_Maintenance_Monitor {
         private $table_sites;
         private $table_logs;
-        private $version = '3.0.2';
+        private $version = '3.0.3';
 
         public function __construct() {
             global $wpdb;
@@ -71,51 +71,48 @@ if (!class_exists('WP_Maintenance_Monitor')) {
         }
 
         public function handle_bridge_download() {
-    if (isset($_GET['action']) && $_GET['action'] === 'download_bridge' && isset($_GET['api_key'])) {
-        if (!current_user_can('manage_options')) return;
+            if (isset($_GET['action']) && $_GET['action'] === 'download_bridge' && isset($_GET['api_key'])) {
+                if (!current_user_can('manage_options')) return;
+                
+                $api_key = sanitize_text_field($_GET['api_key']);
+                $template_path = plugin_dir_path(__FILE__) . 'bridge-connector-template.php';
+                
+                if (!file_exists($template_path)) wp_die('Template Datei fehlt!');
+                if (!class_exists('ZipArchive')) wp_die('PHP ZipArchive Erweiterung ist auf diesem Server nicht aktiv.');
 
-        $api_key = sanitize_text_field($_GET['api_key']);
-        $template_path = plugin_dir_path(__FILE__) . 'bridge-connector-template.php';
+                $content = file_get_contents($template_path);
+                $content = str_replace('YOUR_API_KEY_HERE', $api_key, $content);
+                $content = str_replace('YOUR_DASHBOARD_URL_HERE', get_site_url(), $content);
 
-        if (!file_exists($template_path)) {
-            wp_die('Template-Datei bridge-connector-template.php nicht gefunden!');
+                $zip = new ZipArchive();
+                $temp_file = wp_tempnam('bridge.zip');
+
+                if ($zip->open($temp_file, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+                    $zip->addFromString('wp-bridge-connector.php', $content);
+                    $zip->close();
+
+                    header('Content-Type: application/zip');
+                    header('Content-Disposition: attachment; filename="wp-bridge-connector.zip"');
+                    header('Content-Length: ' . filesize($temp_file));
+                    readfile($temp_file);
+                    unlink($temp_file);
+                    exit;
+                }
+            }
         }
 
-        // Template laden und Platzhalter ersetzen
-        $content = file_get_contents($template_path);
-        $content = str_replace('YOUR_API_KEY_HERE', $api_key, $content);
-        $content = str_replace('YOUR_DASHBOARD_URL_HERE', get_site_url(), $content);
+        // --- AJAX METHODEN MIT FEHLERPRÜFUNG ---
 
-        // ZIP erstellen
-        $zip = new ZipArchive();
-        $zip_name = 'wp-bridge-connector.zip';
-        $temp_file = wp_tempnam($zip_name);
-
-        if ($zip->open($temp_file, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
-            // Die Datei innerhalb der ZIP heißt wp-bridge-connector.php
-            $zip->addFromString('wp-bridge-connector.php', $content);
-            $zip->close();
-
-            // Header für ZIP-Download
-            header('Content-Type: application/zip');
-            header('Content-Disposition: attachment; filename="' . $zip_name . '"');
-            header('Content-Length: ' . filesize($temp_file));
-            header('Pragma: no-cache');
-            header('Expires: 0');
-
-            readfile($temp_file);
-            unlink($temp_file); // Temp-Datei löschen
-            exit;
-        } else {
-            wp_die('Fehler beim Erstellen der ZIP-Datei. Stellen Sie sicher, dass die PHP ZipArchive-Erweiterung installiert ist.');
+        private function get_post_id() {
+            return isset($_POST['id']) ? intval($_POST['id']) : 0;
         }
-    }
-}
 
         public function ajax_add_site() {
             check_ajax_referer('wpmm_nonce', 'nonce');
-            $name = sanitize_text_field($_POST['name']);
-            $url  = esc_url_raw($_POST['url']);
+            $name = isset($_POST['name']) ? sanitize_text_field($_POST['name']) : '';
+            $url  = isset($_POST['url']) ? esc_url_raw($_POST['url']) : '';
+            if (empty($name) || empty($url)) wp_send_json_error(['message' => 'Daten unvollständig']);
+            
             $api_key = function_exists('random_bytes') ? bin2hex(random_bytes(16)) : md5(time().rand());
             global $wpdb;
             $wpdb->insert($this->table_sites, ['name' => $name, 'url' => $url, 'api_key' => $api_key]);
@@ -124,65 +121,61 @@ if (!class_exists('WP_Maintenance_Monitor')) {
 
         public function ajax_get_login_url() {
             check_ajax_referer('wpmm_nonce', 'nonce');
-            $site = $this->get_site(intval($_POST['id']));
+            $site = $this->get_site($this->get_post_id());
+            if (!$site) wp_send_json_error(['message' => 'Seite nicht gefunden']);
+            
             $response = $this->api_request($site->url, '/get-login-url', $site->api_key);
             if (isset($response['success']) && $response['success']) {
                 wp_send_json_success(['login_url' => $response['login_url']]);
             } else {
-                wp_send_json_error(['message' => 'Bridge Error']);
+                wp_send_json_error(['message' => 'Bridge Antwort fehlerhaft']);
             }
         }
 
         public function ajax_get_status() {
             check_ajax_referer('wpmm_nonce', 'nonce');
-            $site = $this->get_site(intval($_POST['id']));
+            $site = $this->get_site($this->get_post_id());
             if (!$site) wp_send_json_error();
             wp_send_json_success($this->api_request($site->url, '/status', $site->api_key));
         }
 
         public function ajax_update_plugin() {
             check_ajax_referer('wpmm_nonce', 'nonce');
-            $site = $this->get_site(intval($_POST['id']));
-            wp_send_json_success($this->api_request($site->url, '/update-plugin', $site->api_key, ['plugin' => $_POST['item']]));
-        }
-
-        public function ajax_update_theme() {
-            check_ajax_referer('wpmm_nonce', 'nonce');
-            $site = $this->get_site(intval($_POST['id']));
-            wp_send_json_success($this->api_request($site->url, '/update-theme', $site->api_key, ['theme' => $_POST['item']]));
-        }
-
-        public function ajax_update_core() {
-            check_ajax_referer('wpmm_nonce', 'nonce');
-            $site = $this->get_site(intval($_POST['id']));
-            wp_send_json_success($this->api_request($site->url, '/update-core', $site->api_key, []));
+            $site = $this->get_site($this->get_post_id());
+            $item = isset($_POST['item']) ? sanitize_text_field($_POST['item']) : '';
+            wp_send_json_success($this->api_request($site->url, '/update-plugin', $site->api_key, ['plugin' => $item]));
         }
 
         public function ajax_update_site() {
             check_ajax_referer('wpmm_nonce', 'nonce');
+            $id = $this->get_post_id();
+            if (!$id) wp_send_json_error(['message' => 'ID fehlt']);
+            
             global $wpdb;
-            $wpdb->update($this->table_sites, ['name' => $_POST['name'], 'url' => $_POST['url']], ['id' => intval($_POST['id'])]);
+            $wpdb->update($this->table_sites, 
+                ['name' => sanitize_text_field($_POST['name']), 'url' => esc_url_raw($_POST['url'])], 
+                ['id' => $id]
+            );
             wp_send_json_success();
         }
 
         public function ajax_delete_site() {
             check_ajax_referer('wpmm_nonce', 'nonce');
             global $wpdb;
-            $wpdb->delete($this->table_sites, ['id' => intval($_POST['id'])]);
+            $wpdb->delete($this->table_sites, ['id' => $this->get_post_id()]);
             wp_send_json_success();
         }
 
+        // Hilfsfunktionen identisch geblieben...
         private function get_site($id) {
+            if (!$id) return false;
             global $wpdb;
             return $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->table_sites} WHERE id = %d", $id));
         }
 
         private function api_request($url, $endpoint, $api_key, $post_data = null) {
             $full_url = rtrim($url, '/') . '/wp-json/bridge/v1' . $endpoint;
-            $args = [
-                'headers' => ['X-Bridge-Key' => $api_key, 'Content-Type' => 'application/json'],
-                'timeout' => 45, 'sslverify' => false
-            ];
+            $args = ['headers' => ['X-Bridge-Key' => $api_key, 'Content-Type' => 'application/json'], 'timeout' => 45, 'sslverify' => false];
             if ($post_data !== null) {
                 $args['body'] = json_encode($post_data);
                 $response = wp_remote_post($full_url, $args);

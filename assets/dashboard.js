@@ -223,11 +223,16 @@
         url: url
     }, function(response) {
         if (response.success) {
-            // Seite neu laden, damit die PHP-Erfolgsmeldung 
-            // aus der Session/URL angezeigt wird
-            location.reload();
+            // Wir hängen den Key und die ID an die URL an, damit das 
+            // PHP-Template nach dem Reload weiß, was es anzeigen soll.
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('wpmm_added', '1');
+            currentUrl.searchParams.set('api_key', response.data.api_key);
+            currentUrl.searchParams.set('site_id', response.data.site_id);
+            
+            window.location.href = currentUrl.toString();
         } else {
-            alert('Fehler beim Hinzufügen: ' + (response.data.message || 'Unbekannter Fehler'));
+            alert('Fehler: ' + response.data.message);
         }
     });
 }

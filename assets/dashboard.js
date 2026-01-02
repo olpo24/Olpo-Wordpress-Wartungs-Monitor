@@ -61,16 +61,23 @@
         });
     });
 
-    function loadSiteStatus(id) {
-        $.post(wpmmData.ajax_url, { action: 'wpmm_get_status', nonce: wpmmData.nonce, id: id }, function(r) {
-            if(r.success && r.data) {
-                siteDataCache[id] = r.data;
-                const c = r.data.updates.counts;
-                $(`#version-${id}`).text(r.data.version || '-');
-                $(`#status-${id}`).html(`<span class="cluster-badge ${c.plugins > 0 ? 'has-updates' : ''}">P: ${c.plugins}</span><span class="cluster-badge ${c.themes > 0 ? 'has-updates' : ''}">T: ${c.themes}</span>`);
-            }
-        });
-    }
+  function loadSiteStatus(id) {
+    $.post(wpmmData.ajax_url, { action: 'wpmm_get_status', nonce: wpmmData.nonce, id: id }, function(r) {
+        // Prüfung ob r.data UND r.data.updates existieren
+        if(r.success && r.data && r.data.updates) {
+            siteDataCache[id] = r.data;
+            const c = r.data.updates.counts;
+            $(`#version-${id}`).text(r.data.version || '-');
+            $(`#status-${id}`).html(`
+                <span class="cluster-badge ${c.plugins > 0 ? 'has-updates' : ''}">P: ${c.plugins}</span>
+                <span class="cluster-badge ${c.themes > 0 ? 'has-updates' : ''}">T: ${c.themes}</span>
+            `);
+        } else {
+            $(`#status-${id}`).text("Fehlerhafte Daten");
+            console.error("Unvollständige Antwort für Seite " + id, r);
+        }
+    });
+}
 
     function renderUpdateLists(id) {
         const data = siteDataCache[id];

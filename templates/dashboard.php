@@ -8,12 +8,18 @@
         <div class="notice notice-info"><p>Keine Seiten konfiguriert.</p></div>
     <?php else: ?>
         <div class="site-grid">
-            <?php foreach ($sites as $site): ?>
+            <?php foreach ($sites as $site): 
+                // Fallback-Logik für Spaltennamen aus der DB
+                $name = isset($site->site_name) ? $site->site_name : (isset($site->name) ? $site->name : 'Unbekannte Seite');
+                $url  = isset($site->site_url) ? $site->site_url : (isset($site->url) ? $site->url : '');
+            ?>
                 <div class="site-card" data-id="<?= $site->id ?>">
                     <div class="card-header">
                         <div>
-                            <h3><?= esc_html($site->site_name) ?></h3>
-                            <a href="<?= esc_url($site->site_url) ?>" target="_blank" class="site-url"><?= esc_url($site->site_url) ?></a>
+                            <h3><?= esc_html($name) ?></h3>
+                            <?php if ($url): ?>
+                                <a href="<?= esc_url($url) ?>" target="_blank" class="site-url"><?= esc_url($url) ?></a>
+                            <?php endif; ?>
                         </div>
                     </div>
                     <div class="card-content">
@@ -23,8 +29,8 @@
                         <button class="button button-small btn-update-trigger" style="display:none;">Updates verwalten</button>
                         <button class="button button-small btn-edit-site" 
                                 data-id="<?= $site->id ?>" 
-                                data-name="<?= esc_attr($site->site_name) ?>" 
-                                data-url="<?= esc_attr($site->site_url) ?>">Details</button>
+                                data-name="<?= esc_attr($name) ?>" 
+                                data-url="<?= esc_attr($url) ?>">Details</button>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -36,24 +42,24 @@
     <div class="wpmm-modal-content">
         <div class="modal-header">
             <h2>Seite bearbeiten</h2>
-            <button class="close-edit-modal" style="border:none; background:none; cursor:pointer;">&times;</button>
+            <button class="close-edit-modal" style="border:none; background:none; cursor:pointer; font-size:20px;">&times;</button>
         </div>
         <div class="modal-body">
             <form id="edit-site-form">
                 <input type="hidden" id="edit-site-id">
                 <table class="form-table">
                     <tr>
-                        <td><label>Name</label></td>
+                        <td><label for="edit-site-name">Name</label></td>
                         <td><input type="text" id="edit-site-name" class="regular-text"></td>
                     </tr>
                     <tr>
-                        <td><label>URL</label></td>
+                        <td><label for="edit-site-url">URL</label></td>
                         <td><input type="url" id="edit-site-url" class="regular-text"></td>
                     </tr>
                 </table>
                 <p class="submit">
                     <button type="submit" class="button button-primary">Speichern</button>
-                    <button type="button" class="button btn-delete-site" style="color:#d63638;">Löschen</button>
+                    <button type="button" class="button btn-delete-site" style="color:#d63638; border-color:#d63638;">Löschen</button>
                 </p>
             </form>
         </div>
